@@ -6,6 +6,8 @@ import com.devpedrod.JavaTest.dto.CepDTO;
 import com.devpedrod.JavaTest.dto.frete.FreteInputDTO;
 import com.devpedrod.JavaTest.dto.frete.FreteOutputDTO;
 import com.devpedrod.JavaTest.repository.FreteRepository;
+import com.devpedrod.JavaTest.service.exceptions.CepNotFoundException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -18,6 +20,7 @@ import java.time.LocalDate;
 import static java.time.LocalDateTime.now;
 
 @Service
+@Slf4j
 public class FreteService {
 
     @Autowired
@@ -27,16 +30,13 @@ public class FreteService {
 
     @Transactional(readOnly = true)
     public Page<Frete> findAll(Pageable pageable){
-        Page<Frete> fretes = freteRepository.findAll(pageable);
-        for(Frete x : fretes ){
-            x.setDataConsulta(now());
-            freteRepository.saveAndFlush(x);
-        }
-        return fretes;
+        log.info("Buscando todos os fretes no banco de dados.");
+        return freteRepository.findAll(pageable);
     }
 
     @Transactional
     public FreteOutputDTO getFrete(FreteInputDTO freteInput){
+        log.info("Buscando frete no banco de dados.");
         Frete frete = freteRepository.findByCepDestinoAndCepOrigemAndNomeDestinatario(
                 freteInput.getCepDestino(), freteInput.getCepOrigem(), freteInput.getNomeDestinatario());
         if (frete != null){
@@ -48,6 +48,7 @@ public class FreteService {
         }
         Frete freteNew = new Frete();
         FreteOutputDTO freteOutput = calculateFrete(freteInput);
+        log.info("Salvando novo frete no banco de dados.");
         BeanUtils.copyProperties(freteOutput, freteNew);
         BeanUtils.copyProperties(freteInput, freteNew);
         freteNew.setDataConsulta(now());
@@ -57,11 +58,17 @@ public class FreteService {
     }
 
     public FreteOutputDTO calculateFrete(FreteInputDTO freteInput){
+        log.info("Calculando valor dor frete.");
         double valorFrete;
         LocalDate dataPrevistaEntrega;
+        CepDTO cepOrigem, cepDestino;
 
-        CepDTO cepOrigem = cepConsumer.getCep(freteInput.getCepOrigem());
-        CepDTO cepDestino = cepConsumer.getCep(freteInput.getCepDestino());
+        try{
+            cepOrigem = cepConsumer.getCep(freteInput.getCepOrigem());
+            cepDestino = cepConsumer.getCep(freteInput.getCepDestino());
+        }catch (Exception e){
+            throw new CepNotFoundException("CEP não encontrado.");
+        }
 
         if(cepDestino.getDdd().equals(cepOrigem.getDdd())){
             valorFrete = freteInput.getPeso() / 2;
