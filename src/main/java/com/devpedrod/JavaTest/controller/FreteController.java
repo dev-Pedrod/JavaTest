@@ -37,14 +37,14 @@ public class FreteController {
     }
 
     @ResponseBody
-    @Operation(summary = "Consulta o frete e salva no banco de dados caso já não exista.")
+    @Operation(summary = "Atualiza e consulta o frete. Salva no banco de dados caso já não exista.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Quando a operação é realizada com sucesso",
                     content = { @Content(mediaType = "application/json", schema = @Schema(implementation = FreteOutputDTO.class))}),
             @ApiResponse(responseCode = "404", description = "Quando o CEP não é encontrado",
                     content = { @Content(mediaType = "application/json", schema = @Schema(implementation = Response.class))})
     })
-    @PostMapping("")
+    @PutMapping("")
     public ResponseEntity<FreteOutputDTO> postFrete(@RequestBody FreteInputDTO freteInput) {
         return ResponseEntity.ok(freteService.getFrete(freteInput));
     }
