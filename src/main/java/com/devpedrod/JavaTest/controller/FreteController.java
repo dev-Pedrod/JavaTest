@@ -44,7 +44,7 @@ public class FreteController {
             @ApiResponse(responseCode = "404", description = "Quando o CEP não é encontrado",
                     content = { @Content(mediaType = "application/json", schema = @Schema(implementation = Response.class))})
     })
-    @PutMapping("")
+    @PostMapping("")
     public ResponseEntity<FreteOutputDTO> postFrete(@RequestBody FreteInputDTO freteInput) {
         return ResponseEntity.ok(freteService.getFrete(freteInput));
     }
